@@ -1,0 +1,1384 @@
+<!DOCTYPE html>
+
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>pH — Platform</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,700;1,300&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<style>
+  :root {
+    --orange: #FF9900;
+    --orange-dim: rgba(255,153,0,0.15);
+    --orange-glow: rgba(255,153,0,0.35);
+    --bg: #080808;
+    --surface: #111111;
+    --surface2: #191919;
+    --surface3: #222222;
+    --border: rgba(255,255,255,0.06);
+    --text: #EFEFEF;
+    --text-dim: #777;
+    --text-muted: #444;
+    --radius: 12px;
+    --font-display: 'Bebas Neue', sans-serif;
+    --font-body: 'DM Sans', sans-serif;
+  }
+
+- { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+body {
+background: var(–bg);
+color: var(–text);
+font-family: var(–font-body);
+min-height: 100vh;
+overflow-x: hidden;
+position: relative;
+}
+
+body::before {
+content: ‘’;
+position: fixed;
+top: -200px; left: 50%;
+transform: translateX(-50%);
+width: 600px; height: 400px;
+background: radial-gradient(ellipse, rgba(255,153,0,0.07) 0%, transparent 70%);
+pointer-events: none; z-index: 0;
+}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width: 3px; }
+::-webkit-scrollbar-track { background: var(–bg); }
+::-webkit-scrollbar-thumb { background: var(–orange); border-radius: 2px; }
+
+/* ── NAV ── */
+.nav {
+position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+display: flex; align-items: center; justify-content: space-between;
+padding: 14px 16px;
+background: rgba(8,8,8,0.92);
+backdrop-filter: blur(20px);
+border-bottom: 1px solid var(–border);
+}
+
+.nav-logo {
+font-family: var(–font-display);
+font-size: 28px;
+letter-spacing: 2px;
+color: var(–text);
+line-height: 1;
+}
+.nav-logo span { color: var(–orange); }
+
+.nav-actions { display: flex; gap: 8px; align-items: center; }
+.nav-btn {
+background: none; border: none; cursor: pointer;
+color: var(–text-dim); padding: 8px;
+border-radius: 8px; transition: all 0.2s;
+display: flex; align-items: center; justify-content: center;
+}
+.nav-btn:active { background: var(–surface3); color: var(–orange); }
+.nav-btn.active { color: var(–orange); }
+
+.upload-btn {
+background: var(–orange);
+color: #000;
+border: none; cursor: pointer;
+padding: 8px 14px;
+border-radius: 8px;
+font-family: var(–font-body);
+font-weight: 700;
+font-size: 13px;
+display: flex; align-items: center; gap: 6px;
+transition: all 0.2s;
+letter-spacing: 0.3px;
+}
+.upload-btn:active { background: #e68900; transform: scale(0.97); }
+
+/* ── BOTTOM TAB BAR ── */
+.tabbar {
+position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
+display: flex;
+background: rgba(10,10,10,0.95);
+backdrop-filter: blur(20px);
+border-top: 1px solid var(–border);
+padding-bottom: env(safe-area-inset-bottom, 8px);
+}
+.tab-item {
+flex: 1; display: flex; flex-direction: column; align-items: center;
+gap: 4px; padding: 10px 4px 6px;
+cursor: pointer; background: none; border: none;
+color: var(–text-muted); font-family: var(–font-body);
+font-size: 10px; font-weight: 500; transition: all 0.2s;
+}
+.tab-item.active { color: var(–orange); }
+.tab-item:active { transform: scale(0.92); }
+.tab-indicator {
+width: 4px; height: 4px; border-radius: 2px;
+background: var(–orange); margin-top: 2px;
+opacity: 0; transition: opacity 0.2s;
+}
+.tab-item.active .tab-indicator { opacity: 1; }
+
+/* ── PAGES ── */
+.page { display: none; padding: 70px 0 80px; min-height: 100vh; }
+.page.active { display: block; }
+
+/* ── SEARCH BAR ── */
+.search-wrap {
+padding: 12px 16px;
+position: relative;
+}
+.search-box {
+width: 100%; background: var(–surface2);
+border: 1px solid var(–border);
+border-radius: 10px; padding: 10px 16px 10px 40px;
+color: var(–text); font-family: var(–font-body);
+font-size: 14px; outline: none;
+transition: border-color 0.2s;
+}
+.search-box:focus { border-color: rgba(255,153,0,0.5); }
+.search-box::placeholder { color: var(–text-muted); }
+.search-icon {
+position: absolute; left: 28px; top: 50%;
+transform: translateY(-50%); color: var(–text-muted);
+pointer-events: none;
+}
+
+/* ── TAGS ── */
+.tags-row {
+display: flex; gap: 8px; padding: 0 16px 12px;
+overflow-x: auto; scrollbar-width: none;
+}
+.tags-row::-webkit-scrollbar { display: none; }
+.tag {
+flex-shrink: 0;
+padding: 6px 12px; border-radius: 20px;
+font-size: 12px; font-weight: 500; cursor: pointer;
+border: 1px solid var(–border);
+background: var(–surface2); color: var(–text-dim);
+transition: all 0.2s; white-space: nowrap;
+}
+.tag.active {
+background: var(–orange-dim);
+border-color: var(–orange);
+color: var(–orange);
+}
+.tag:active { transform: scale(0.95); }
+
+/* ── SORT ROW ── */
+.sort-row {
+display: flex; gap: 8px; padding: 0 16px 16px;
+align-items: center;
+}
+.sort-label { font-size: 12px; color: var(–text-muted); }
+.sort-btn {
+padding: 5px 10px; border-radius: 6px; font-size: 11px;
+font-weight: 600; cursor: pointer; border: 1px solid var(–border);
+background: none; color: var(–text-muted);
+transition: all 0.2s; font-family: var(–font-body);
+}
+.sort-btn.active { background: var(–orange); border-color: var(–orange); color: #000; }
+
+/* ── FILTER SIDEBAR ── */
+.sidebar-overlay {
+position: fixed; inset: 0; z-index: 200;
+background: rgba(0,0,0,0.7);
+opacity: 0; pointer-events: none;
+transition: opacity 0.3s;
+backdrop-filter: blur(4px);
+}
+.sidebar-overlay.open { opacity: 1; pointer-events: all; }
+
+.sidebar {
+position: fixed; top: 0; right: -320px; bottom: 0; z-index: 201;
+width: 300px; background: var(–surface);
+border-left: 1px solid var(–border);
+transition: right 0.35s cubic-bezier(0.4,0,0.2,1);
+overflow-y: auto; padding: 20px 16px;
+display: flex; flex-direction: column; gap: 24px;
+}
+.sidebar.open { right: 0; }
+
+.sidebar-header {
+display: flex; justify-content: space-between; align-items: center;
+}
+.sidebar-title { font-family: var(–font-display); font-size: 22px; letter-spacing: 2px; }
+.close-btn {
+background: var(–surface3); border: none; cursor: pointer;
+color: var(–text-dim); padding: 8px; border-radius: 8px;
+transition: all 0.2s; display: flex;
+}
+.close-btn:active { color: var(–orange); }
+
+.filter-section h4 {
+font-size: 10px; font-weight: 700; letter-spacing: 2px;
+color: var(–text-muted); text-transform: uppercase; margin-bottom: 10px;
+}
+.filter-pills { display: flex; flex-wrap: wrap; gap: 6px; }
+.filter-pill {
+padding: 6px 12px; border-radius: 20px; font-size: 12px;
+font-weight: 500; cursor: pointer;
+border: 1px solid var(–border);
+background: var(–surface2); color: var(–text-dim);
+transition: all 0.2s;
+}
+.filter-pill.active {
+background: var(–orange-dim); border-color: var(–orange); color: var(–orange);
+}
+
+.range-wrap { padding: 4px 0; }
+.range-label { display: flex; justify-content: space-between; font-size: 11px; color: var(–text-dim); margin-bottom: 8px; }
+input[type=range] {
+width: 100%; accent-color: var(–orange);
+height: 3px; cursor: pointer;
+}
+
+.apply-filter-btn {
+width: 100%; background: var(–orange); border: none; cursor: pointer;
+color: #000; padding: 14px; border-radius: 10px;
+font-family: var(–font-body); font-weight: 700; font-size: 14px;
+transition: all 0.2s; margin-top: auto;
+}
+.apply-filter-btn:active { background: #e68900; transform: scale(0.98); }
+
+/* ── VIDEO GRID ── */
+.video-grid {
+display: grid;
+grid-template-columns: repeat(2, 1fr);
+gap: 10px;
+padding: 0 12px;
+}
+
+.video-card {
+background: var(–surface);
+border-radius: var(–radius);
+overflow: hidden;
+cursor: pointer;
+border: 1px solid var(–border);
+transition: transform 0.2s, border-color 0.2s;
+position: relative;
+}
+.video-card:active { transform: scale(0.97); border-color: rgba(255,153,0,0.3); }
+
+.video-card.wide {
+grid-column: span 2;
+}
+
+.thumb-wrap {
+position: relative; overflow: hidden;
+aspect-ratio: 16/9;
+}
+.video-card.wide .thumb-wrap { aspect-ratio: 16/8; }
+
+.thumb-img {
+width: 100%; height: 100%; object-fit: cover;
+transition: transform 0.4s ease;
+}
+.video-card:active .thumb-img { transform: scale(1.05); }
+
+.thumb-overlay {
+position: absolute; inset: 0;
+background: linear-gradient(to bottom, transparent 40%, rgba(0,0,0,0.85) 100%);
+display: flex; align-items: center; justify-content: center;
+opacity: 0; transition: opacity 0.3s;
+}
+.video-card:active .thumb-overlay { opacity: 1; }
+
+.play-icon {
+width: 44px; height: 44px;
+background: rgba(255,153,0,0.9);
+border-radius: 50%;
+display: flex; align-items: center; justify-content: center;
+backdrop-filter: blur(4px);
+}
+
+.badge {
+position: absolute; top: 8px; left: 8px;
+padding: 3px 7px; border-radius: 4px;
+font-size: 10px; font-weight: 700; letter-spacing: 0.5px;
+line-height: 1.4;
+}
+.badge-4k { background: var(–orange); color: #000; }
+.badge-hd { background: rgba(255,255,255,0.15); backdrop-filter: blur(4px); color: #fff; }
+.badge-live {
+background: #e53e3e; color: #fff;
+display: flex; align-items: center; gap: 4px;
+}
+.badge-live::before {
+content: ‘’;
+width: 5px; height: 5px;
+background: #fff; border-radius: 50%;
+animation: blink 1s infinite;
+}
+@keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+.duration {
+position: absolute; bottom: 8px; right: 8px;
+background: rgba(0,0,0,0.75);
+color: #fff; font-size: 10px; font-weight: 600;
+padding: 2px 6px; border-radius: 4px;
+backdrop-filter: blur(4px);
+}
+
+.card-body { padding: 8px 10px 10px; }
+.card-title {
+font-size: 12px; font-weight: 600; line-height: 1.4;
+display: -webkit-box; -webkit-line-clamp: 2;
+-webkit-box-orient: vertical; overflow: hidden;
+margin-bottom: 6px;
+}
+.video-card.wide .card-title { font-size: 14px; }
+
+.card-meta { display: flex; justify-content: space-between; align-items: center; }
+.creator-row { display: flex; align-items: center; gap: 6px; }
+.creator-avatar {
+width: 18px; height: 18px; border-radius: 50%;
+object-fit: cover; border: 1px solid var(–orange);
+}
+.creator-name { font-size: 11px; color: var(–text-dim); }
+.view-count { font-size: 10px; color: var(–text-muted); }
+
+.card-stats {
+display: flex; gap: 10px; padding: 0 10px 10px;
+border-top: 1px solid var(–border); margin-top: 6px; padding-top: 8px;
+}
+.stat { display: flex; align-items: center; gap: 4px; font-size: 10px; color: var(–text-muted); }
+.stat .orange { color: var(–orange); }
+
+/* ── SECTION HEADER ── */
+.section-header {
+display: flex; justify-content: space-between; align-items: center;
+padding: 16px 16px 8px;
+}
+.section-title { font-family: var(–font-display); font-size: 20px; letter-spacing: 2px; }
+.section-more { font-size: 11px; color: var(–orange); font-weight: 600; }
+
+/* ── LIVE STRIP ── */
+.live-strip {
+display: flex; gap: 10px; padding: 0 16px 16px;
+overflow-x: auto; scrollbar-width: none;
+}
+.live-strip::-webkit-scrollbar { display: none; }
+.live-card {
+flex-shrink: 0; width: 130px; cursor: pointer;
+border-radius: 10px; overflow: hidden;
+border: 1px solid rgba(229,62,62,0.4);
+transition: transform 0.2s;
+}
+.live-card:active { transform: scale(0.96); }
+.live-thumb {
+width: 100%; aspect-ratio: 9/14;
+object-fit: cover; display: block;
+}
+.live-card-info { padding: 6px 8px 8px; background: var(–surface); }
+.live-card-name { font-size: 11px; font-weight: 600; }
+.live-viewers { font-size: 10px; color: var(–text-muted); margin-top: 2px; }
+
+/* ══════════════════════════════
+PROFILE PAGE
+══════════════════════════════ */
+.profile-banner {
+height: 160px; position: relative;
+background: linear-gradient(135deg, #1a0a00 0%, #3d1f00 40%, #1a0a00 100%);
+overflow: hidden;
+}
+.profile-banner::before {
+content: ‘’;
+position: absolute; inset: 0;
+background: url(“data:image/svg+xml,%3Csvg width=‘60’ height=‘60’ viewBox=‘0 0 60 60’ xmlns=‘http://www.w3.org/2000/svg’%3E%3Cg fill=‘none’ fill-rule=‘evenodd’%3E%3Cg fill=’%23FF9900’ fill-opacity=‘0.06’%3E%3Cpath d=‘M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z’/%3E%3C/g%3E%3C/g%3E%3C/svg%3E”);
+}
+.banner-gradient {
+position: absolute; bottom: 0; left: 0; right: 0; height: 80px;
+background: linear-gradient(to bottom, transparent, var(–bg));
+}
+
+.profile-header { padding: 0 16px; position: relative; }
+.profile-avatar-wrap {
+position: relative; display: inline-block;
+margin-top: -40px; margin-bottom: 10px;
+}
+.profile-avatar {
+width: 80px; height: 80px; border-radius: 50%;
+object-fit: cover;
+border: 3px solid var(–orange);
+box-shadow: 0 0 20px var(–orange-glow);
+display: block;
+}
+.online-dot {
+position: absolute; bottom: 4px; right: 4px;
+width: 14px; height: 14px; background: #48bb78;
+border-radius: 50%; border: 2px solid var(–bg);
+}
+
+.profile-info-row {
+display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;
+}
+.profile-name { font-family: var(–font-display); font-size: 26px; letter-spacing: 2px; line-height: 1.1; }
+.profile-handle { font-size: 13px; color: var(–text-dim); margin-top: 2px; }
+.follow-btn {
+background: var(–orange); border: none; cursor: pointer;
+color: #000; padding: 9px 18px; border-radius: 8px;
+font-family: var(–font-body); font-weight: 700; font-size: 13px;
+transition: all 0.2s; flex-shrink: 0;
+}
+.follow-btn.following {
+background: none; border: 1px solid var(–orange); color: var(–orange);
+}
+.follow-btn:active { transform: scale(0.96); }
+
+.profile-stats {
+display: flex; gap: 24px; padding: 12px 16px;
+border-top: 1px solid var(–border); border-bottom: 1px solid var(–border);
+margin: 0 0 0;
+}
+.pstat { text-align: center; }
+.pstat-num { font-family: var(–font-display); font-size: 22px; color: var(–orange); }
+.pstat-label { font-size: 10px; color: var(–text-muted); margin-top: 2px; letter-spacing: 0.5px; text-transform: uppercase; }
+
+.profile-tabs {
+display: flex; border-bottom: 1px solid var(–border);
+padding: 0 16px; gap: 0; margin-top: 0;
+}
+.ptab {
+flex: 1; padding: 14px 0; text-align: center;
+font-size: 13px; font-weight: 600; cursor: pointer;
+color: var(–text-muted); border-bottom: 2px solid transparent;
+transition: all 0.2s; background: none; border-top: none;
+border-left: none; border-right: none; font-family: var(–font-body);
+}
+.ptab.active { color: var(–orange); border-bottom-color: var(–orange); }
+
+.profile-tab-content { display: none; }
+.profile-tab-content.active { display: block; }
+
+/* Activity feed */
+.activity-feed { padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+.activity-item {
+display: flex; gap: 10px; align-items: flex-start;
+padding: 12px; background: var(–surface);
+border-radius: 10px; border: 1px solid var(–border);
+}
+.activity-avatar {
+width: 34px; height: 34px; border-radius: 50%;
+object-fit: cover; flex-shrink: 0;
+}
+.activity-text { flex: 1; }
+.activity-user { font-size: 12px; font-weight: 700; }
+.activity-action { font-size: 12px; color: var(–text-dim); display: inline; }
+.activity-time { font-size: 10px; color: var(–text-muted); margin-top: 3px; }
+.activity-like { color: var(–orange); font-weight: 700; }
+
+/* About tab */
+.about-section { padding: 16px; }
+.about-bio { font-size: 13px; color: var(–text-dim); line-height: 1.7; margin-bottom: 16px; }
+.about-links { display: flex; flex-direction: column; gap: 8px; }
+.about-link {
+display: flex; align-items: center; gap: 10px;
+padding: 10px 12px; background: var(–surface);
+border-radius: 8px; border: 1px solid var(–border);
+font-size: 12px; color: var(–text-dim); text-decoration: none;
+transition: border-color 0.2s;
+}
+.about-link:active { border-color: var(–orange); color: var(–orange); }
+.about-link i { color: var(–orange); }
+
+/* ══════════════════════════════
+UPLOAD MODAL
+══════════════════════════════ */
+.modal-overlay {
+position: fixed; inset: 0; z-index: 300;
+background: rgba(0,0,0,0.8);
+backdrop-filter: blur(8px);
+display: flex; align-items: flex-end;
+opacity: 0; pointer-events: none;
+transition: opacity 0.3s;
+}
+.modal-overlay.open { opacity: 1; pointer-events: all; }
+
+.modal {
+width: 100%; background: var(–surface);
+border-radius: 20px 20px 0 0;
+border-top: 1px solid var(–border);
+padding: 20px 16px 40px;
+transform: translateY(100%);
+transition: transform 0.4s cubic-bezier(0.4,0,0.2,1);
+max-height: 90vh; overflow-y: auto;
+}
+.modal-overlay.open .modal { transform: translateY(0); }
+
+.modal-handle {
+width: 36px; height: 4px; background: var(–surface3);
+border-radius: 2px; margin: 0 auto 20px;
+}
+.modal-title { font-family: var(–font-display); font-size: 24px; letter-spacing: 2px; margin-bottom: 20px; }
+
+.dropzone {
+border: 2px dashed rgba(255,153,0,0.35);
+border-radius: 14px; padding: 40px 20px;
+text-align: center; cursor: pointer;
+background: var(–surface2);
+transition: all 0.2s; margin-bottom: 20px;
+position: relative; overflow: hidden;
+}
+.dropzone.dragover {
+border-color: var(–orange);
+background: var(–orange-dim);
+}
+.dropzone-icon { color: var(–orange); margin-bottom: 12px; }
+.dropzone-title { font-weight: 700; font-size: 15px; margin-bottom: 6px; }
+.dropzone-sub { font-size: 12px; color: var(–text-muted); }
+.dropzone-input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+
+.modal-form { display: flex; flex-direction: column; gap: 14px; }
+.form-field { display: flex; flex-direction: column; gap: 6px; }
+.form-label { font-size: 11px; font-weight: 700; color: var(–text-muted); text-transform: uppercase; letter-spacing: 1px; }
+.form-input {
+background: var(–surface2); border: 1px solid var(–border);
+border-radius: 8px; padding: 12px 14px; color: var(–text);
+font-family: var(–font-body); font-size: 14px; outline: none;
+transition: border-color 0.2s;
+}
+.form-input:focus { border-color: rgba(255,153,0,0.5); }
+
+.category-pills { display: flex; flex-wrap: wrap; gap: 6px; }
+.cat-pill {
+padding: 7px 14px; border-radius: 20px; font-size: 12px;
+font-weight: 600; cursor: pointer; border: 1px solid var(–border);
+background: var(–surface2); color: var(–text-dim);
+transition: all 0.2s; font-family: var(–font-body);
+}
+.cat-pill.active { background: var(–orange-dim); border-color: var(–orange); color: var(–orange); }
+
+.submit-btn {
+background: var(–orange); border: none; cursor: pointer;
+color: #000; padding: 16px; border-radius: 10px;
+font-family: var(–font-body); font-weight: 700; font-size: 15px;
+width: 100%; transition: all 0.2s; margin-top: 6px;
+display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.submit-btn:active { background: #e68900; transform: scale(0.98); }
+
+/* ══════════════════════════════
+EXPLORE PAGE
+══════════════════════════════ */
+.trending-strip {
+display: flex; gap: 8px; padding: 8px 16px 16px;
+overflow-x: auto; scrollbar-width: none;
+}
+.trending-strip::-webkit-scrollbar { display: none; }
+.trend-card {
+flex-shrink: 0; cursor: pointer;
+border-radius: 10px; overflow: hidden;
+width: 100px; transition: transform 0.2s;
+position: relative;
+}
+.trend-card:active { transform: scale(0.95); }
+.trend-thumb { width: 100%; aspect-ratio: 1; object-fit: cover; display: block; }
+.trend-label {
+position: absolute; bottom: 0; left: 0; right: 0;
+padding: 20px 8px 6px;
+background: linear-gradient(to bottom, transparent, rgba(0,0,0,0.9));
+font-size: 11px; font-weight: 700;
+}
+
+.creator-strip {
+display: flex; gap: 14px; padding: 0 16px 16px;
+overflow-x: auto; scrollbar-width: none;
+}
+.creator-strip::-webkit-scrollbar { display: none; }
+.creator-chip {
+flex-shrink: 0; display: flex; flex-direction: column;
+align-items: center; gap: 6px; cursor: pointer;
+transition: transform 0.2s;
+}
+.creator-chip:active { transform: scale(0.95); }
+.creator-chip-avatar {
+width: 56px; height: 56px; border-radius: 50%;
+object-fit: cover; border: 2px solid var(–border);
+transition: border-color 0.2s;
+}
+.creator-chip.active .creator-chip-avatar { border-color: var(–orange); box-shadow: 0 0 12px var(–orange-glow); }
+.creator-chip-name { font-size: 10px; color: var(–text-dim); font-weight: 500; }
+
+/* TOAST */
+.toast {
+position: fixed; bottom: 100px; left: 50%;
+transform: translateX(-50%) translateY(20px);
+background: var(–surface3); border: 1px solid var(–border);
+color: var(–text); padding: 10px 20px;
+border-radius: 30px; font-size: 13px; font-weight: 500;
+z-index: 500; opacity: 0; transition: all 0.3s; pointer-events: none;
+white-space: nowrap;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* PLACEHOLDER IMAGES via gradient */
+.thumb-placeholder {
+width: 100%; height: 100%;
+display: flex; align-items: center; justify-content: center;
+font-size: 28px;
+}
+
+.hidden { display: none !important; }
+
+/* Animations */
+@keyframes fadeSlideUp {
+from { opacity: 0; transform: translateY(20px); }
+to { opacity: 1; transform: translateY(0); }
+}
+.video-card { animation: fadeSlideUp 0.4s ease both; }
+.video-card:nth-child(1) { animation-delay: 0.05s; }
+.video-card:nth-child(2) { animation-delay: 0.10s; }
+.video-card:nth-child(3) { animation-delay: 0.15s; }
+.video-card:nth-child(4) { animation-delay: 0.20s; }
+.video-card:nth-child(5) { animation-delay: 0.25s; }
+.video-card:nth-child(6) { animation-delay: 0.30s; }
+
+/* Gradient thumbs */
+.g1 { background: linear-gradient(135deg, #1a0050, #3d0033, #ff6600); }
+.g2 { background: linear-gradient(135deg, #003322, #006644, #00cc88); }
+.g3 { background: linear-gradient(135deg, #001133, #003366, #0099ff); }
+.g4 { background: linear-gradient(135deg, #330000, #660000, #ff3300); }
+.g5 { background: linear-gradient(135deg, #1a1a00, #444400, #cccc00); }
+.g6 { background: linear-gradient(135deg, #002222, #004444, #00aaaa); }
+.g7 { background: linear-gradient(135deg, #220033, #440066, #aa00ff); }
+.g8 { background: linear-gradient(135deg, #001a00, #003300, #00aa44); }
+.g9 { background: linear-gradient(135deg, #1a1100, #332200, #ff8800); }
+
+.emoji-icon {
+font-size: 32px; opacity: 0.6;
+}
+
+/* Notification badge */
+.notif-badge {
+position: absolute; top: 6px; right: 6px;
+width: 8px; height: 8px; background: var(–orange); border-radius: 50%;
+border: 1.5px solid var(–bg);
+}
+</style>
+
+</head>
+<body>
+
+<!-- ── NAV ── -->
+
+<nav class="nav">
+  <div class="nav-logo">p<span>H</span></div>
+  <div class="nav-actions">
+    <button class="nav-btn" id="notifBtn" style="position:relative">
+      <i data-lucide="bell" width="20" height="20"></i>
+      <div class="notif-badge"></div>
+    </button>
+    <button class="upload-btn" onclick="openModal()">
+      <i data-lucide="upload" width="14" height="14"></i>
+      Upload
+    </button>
+  </div>
+</nav>
+
+<!-- ══════════════════════════════
+     PAGE: HOME
+══════════════════════════════ -->
+
+<div class="page active" id="page-home">
+
+  <!-- Search -->
+
+  <div class="search-wrap">
+    <i data-lucide="search" class="search-icon" width="16" height="16"></i>
+    <input class="search-box" type="text" placeholder="Rechercher des vidéos, créateurs…" id="searchInput" oninput="filterVideos()">
+  </div>
+
+  <!-- Tags -->
+
+  <div class="tags-row" id="tagsRow">
+    <div class="tag active" data-tag="all" onclick="selectTag(this)">Tout</div>
+    <div class="tag" data-tag="Gaming" onclick="selectTag(this)">🎮 Gaming</div>
+    <div class="tag" data-tag="Tech" onclick="selectTag(this)">💻 Tech</div>
+    <div class="tag" data-tag="Vlog" onclick="selectTag(this)">📹 Vlog</div>
+    <div class="tag" data-tag="Music" onclick="selectTag(this)">🎵 Music</div>
+    <div class="tag" data-tag="Sport" onclick="selectTag(this)">⚡ Sport</div>
+  </div>
+
+  <!-- Sort row -->
+
+  <div class="sort-row">
+    <span class="sort-label">Tri :</span>
+    <button class="sort-btn active" onclick="setSort(this,'popular')">🔥 Pop</button>
+    <button class="sort-btn" onclick="setSort(this,'recent')">🕐 Récent</button>
+    <button class="sort-btn" onclick="setSort(this,'engagement')">💥 Engage</button>
+    <button class="nav-btn" onclick="openSidebar()" style="margin-left:auto">
+      <i data-lucide="sliders-horizontal" width="18" height="18"></i>
+    </button>
+  </div>
+
+  <!-- LIVE strip -->
+
+  <div class="section-header">
+    <div class="section-title">EN DIRECT</div>
+    <div class="section-more">Voir tout →</div>
+  </div>
+  <div class="live-strip">
+    <div class="live-card">
+      <div class="thumb-placeholder live-thumb g4" style="aspect-ratio:9/14;">
+        <span class="emoji-icon">🎮</span>
+      </div>
+      <div class="live-card-info">
+        <div class="live-card-name">xNovaxYT</div>
+        <div class="live-viewers">12.4k viewers</div>
+      </div>
+    </div>
+    <div class="live-card">
+      <div class="thumb-placeholder live-thumb g2" style="aspect-ratio:9/14;">
+        <span class="emoji-icon">💻</span>
+      </div>
+      <div class="live-card-info">
+        <div class="live-card-name">TechByNara</div>
+        <div class="live-viewers">8.2k viewers</div>
+      </div>
+    </div>
+    <div class="live-card">
+      <div class="thumb-placeholder live-thumb g7" style="aspect-ratio:9/14;">
+        <span class="emoji-icon">🎵</span>
+      </div>
+      <div class="live-card-info">
+        <div class="live-card-name">BeatsByLuka</div>
+        <div class="live-viewers">5.7k viewers</div>
+      </div>
+    </div>
+    <div class="live-card">
+      <div class="thumb-placeholder live-thumb g5" style="aspect-ratio:9/14;">
+        <span class="emoji-icon">⚡</span>
+      </div>
+      <div class="live-card-info">
+        <div class="live-card-name">RunnerMax</div>
+        <div class="live-viewers">3.1k viewers</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Video Grid -->
+
+  <div class="section-header">
+    <div class="section-title">POUR TOI</div>
+    <div class="section-more">Filtres →</div>
+  </div>
+
+  <div class="video-grid" id="videoGrid">
+    <!-- Populated by JS -->
+  </div>
+
+  <div style="padding:20px; text-align:center; color:var(--text-muted); font-size:12px;" id="noResults" style="display:none">
+    Aucune vidéo trouvée 🔍
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+     PAGE: EXPLORE
+══════════════════════════════ -->
+
+<div class="page" id="page-explore">
+  <div class="search-wrap" style="padding-top:16px">
+    <i data-lucide="search" class="search-icon" width="16" height="16"></i>
+    <input class="search-box" type="text" placeholder="Explorer tendances, créateurs…">
+  </div>
+
+  <div class="section-header">
+    <div class="section-title">TENDANCES</div>
+  </div>
+  <div class="trending-strip">
+    <div class="trend-card"><div class="thumb-placeholder trend-thumb g1" style="aspect-ratio:1;"><span class="emoji-icon">🎮</span></div><div class="trend-label">Gaming</div></div>
+    <div class="trend-card"><div class="thumb-placeholder trend-thumb g3" style="aspect-ratio:1;"><span class="emoji-icon">💻</span></div><div class="trend-label">Tech</div></div>
+    <div class="trend-card"><div class="thumb-placeholder trend-thumb g2" style="aspect-ratio:1;"><span class="emoji-icon">🌍</span></div><div class="trend-label">Vlog</div></div>
+    <div class="trend-card"><div class="thumb-placeholder trend-thumb g7" style="aspect-ratio:1;"><span class="emoji-icon">🎵</span></div><div class="trend-label">Music</div></div>
+    <div class="trend-card"><div class="thumb-placeholder trend-thumb g9" style="aspect-ratio:1;"><span class="emoji-icon">⚡</span></div><div class="trend-label">Sport</div></div>
+    <div class="trend-card"><div class="thumb-placeholder trend-thumb g6" style="aspect-ratio:1;"><span class="emoji-icon">🍳</span></div><div class="trend-label">Cuisine</div></div>
+  </div>
+
+  <div class="section-header">
+    <div class="section-title">CRÉATEURS</div>
+    <div class="section-more">Voir tout →</div>
+  </div>
+  <div class="creator-strip">
+    <div class="creator-chip active">
+      <div class="creator-chip-avatar g4" style="width:56px;height:56px;border-radius:50%;"></div>
+      <div class="creator-chip-name">xNovaxYT</div>
+    </div>
+    <div class="creator-chip">
+      <div class="creator-chip-avatar g2" style="width:56px;height:56px;border-radius:50%;"></div>
+      <div class="creator-chip-name">TechByNara</div>
+    </div>
+    <div class="creator-chip">
+      <div class="creator-chip-avatar g3" style="width:56px;height:56px;border-radius:50%;"></div>
+      <div class="creator-chip-name">Lekko_Dev</div>
+    </div>
+    <div class="creator-chip">
+      <div class="creator-chip-avatar g7" style="width:56px;height:56px;border-radius:50%;"></div>
+      <div class="creator-chip-name">BeatsByLuka</div>
+    </div>
+    <div class="creator-chip">
+      <div class="creator-chip-avatar g5" style="width:56px;height:56px;border-radius:50%;"></div>
+      <div class="creator-chip-name">RunnerMax</div>
+    </div>
+  </div>
+
+  <!-- Trending videos -->
+
+  <div class="section-header">
+    <div class="section-title">TOP VIDÉOS</div>
+  </div>
+  <div class="video-grid">
+    <div class="video-card wide">
+      <div class="thumb-wrap"><div class="thumb-placeholder g1" style="width:100%;height:100%;"><span class="emoji-icon" style="font-size:48px">🔥</span></div>
+        <span class="badge badge-4k">4K</span>
+        <span class="duration">18:42</span>
+        <div class="thumb-overlay"><div class="play-icon"><i data-lucide="play" width="18" height="18" style="color:#000;margin-left:2px"></i></div></div>
+      </div>
+      <div class="card-body">
+        <div class="card-title">APEX LEGENDS — Séquence de 30 kills consécutifs sans mourir</div>
+        <div class="card-meta">
+          <div class="creator-row"><div style="width:18px;height:18px;border-radius:50%;background:var(--g4);border:1px solid var(--orange);flex-shrink:0;"></div><span class="creator-name">xNovaxYT</span></div>
+          <span class="view-count">2.3M vues</span>
+        </div>
+      </div>
+    </div>
+    <div class="video-card">
+      <div class="thumb-wrap"><div class="thumb-placeholder g3" style="width:100%;height:100%;"><span class="emoji-icon">🤖</span></div>
+        <span class="badge badge-hd">HD</span><span class="duration">12:05</span>
+        <div class="thumb-overlay"><div class="play-icon"><i data-lucide="play" width="16" height="16" style="color:#000;margin-left:2px"></i></div></div>
+      </div>
+      <div class="card-body">
+        <div class="card-title">GPT-5 : révolution ou hype ?</div>
+        <div class="card-meta"><div class="creator-row"><span class="creator-name">Lekko_Dev</span></div><span class="view-count">892k</span></div>
+      </div>
+    </div>
+    <div class="video-card">
+      <div class="thumb-wrap"><div class="thumb-placeholder g2" style="width:100%;height:100%;"><span class="emoji-icon">🌍</span></div>
+        <span class="badge badge-hd">HD</span><span class="duration">22:14</span>
+        <div class="thumb-overlay"><div class="play-icon"><i data-lucide="play" width="16" height="16" style="color:#000;margin-left:2px"></i></div></div>
+      </div>
+      <div class="card-body">
+        <div class="card-title">24h au Japon solo</div>
+        <div class="card-meta"><div class="creator-row"><span class="creator-name">TechByNara</span></div><span class="view-count">1.1M</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+     PAGE: PROFILE
+══════════════════════════════ -->
+
+<div class="page" id="page-profile">
+  <!-- Banner -->
+  <div class="profile-banner" style="margin-top:-70px; padding-top:70px">
+    <div class="g9" style="width:100%;height:100%;position:absolute;top:0;left:0;opacity:0.5;"></div>
+    <div style="position:absolute;top:80px;right:20px;display:flex;gap:8px">
+      <button class="nav-btn" style="background:rgba(0,0,0,0.4);backdrop-filter:blur(8px)">
+        <i data-lucide="share-2" width="18" height="18"></i>
+      </button>
+      <button class="nav-btn" style="background:rgba(0,0,0,0.4);backdrop-filter:blur(8px)">
+        <i data-lucide="settings" width="18" height="18"></i>
+      </button>
+    </div>
+    <div class="banner-gradient"></div>
+  </div>
+
+  <div class="profile-header">
+    <div style="display:flex;justify-content:space-between;align-items:flex-end">
+      <div class="profile-avatar-wrap">
+        <div class="profile-avatar g9" style="display:flex;align-items:center;justify-content:center;font-size:36px">👤</div>
+        <div class="online-dot"></div>
+      </div>
+      <div style="padding-bottom:8px">
+        <button class="follow-btn" id="followBtn" onclick="toggleFollow()">+ Suivre</button>
+      </div>
+    </div>
+    <div class="profile-info-row" style="flex-direction:column;align-items:flex-start">
+      <div class="profile-name">xNOVAx<span style="color:var(--orange)">YT</span></div>
+      <div class="profile-handle">@xnovaxyt · Créateur vérifié ✓</div>
+    </div>
+  </div>
+
+  <div class="profile-stats">
+    <div class="pstat"><div class="pstat-num">2.3M</div><div class="pstat-label">Abonnés</div></div>
+    <div class="pstat"><div class="pstat-num">847</div><div class="pstat-label">Vidéos</div></div>
+    <div class="pstat"><div class="pstat-num">98%</div><div class="pstat-label">Engage</div></div>
+    <div class="pstat"><div class="pstat-num">12M</div><div class="pstat-label">Vues</div></div>
+  </div>
+
+  <div class="profile-tabs">
+    <button class="ptab active" onclick="switchProfileTab(this,'videos')">Vidéos</button>
+    <button class="ptab" onclick="switchProfileTab(this,'playlists')">Playlists</button>
+    <button class="ptab" onclick="switchProfileTab(this,'activity')">Activité</button>
+    <button class="ptab" onclick="switchProfileTab(this,'about')">À propos</button>
+  </div>
+
+  <!-- Videos tab -->
+
+  <div class="profile-tab-content active" id="tab-videos">
+    <div class="video-grid" style="padding-top:16px">
+      <div class="video-card"><div class="thumb-wrap"><div class="thumb-placeholder g1" style="width:100%;height:100%;"><span class="emoji-icon">🎮</span></div><span class="badge badge-4k">4K</span><span class="duration">24:16</span><div class="thumb-overlay"><div class="play-icon"><i data-lucide="play" width="16" height="16" style="color:#000;margin-left:2px"></i></div></div></div><div class="card-body"><div class="card-title">Warzone Season 4 Full Game</div><div class="card-meta"><span class="view-count">1.2M vues</span></div></div></div>
+      <div class="video-card"><div class="thumb-wrap"><div class="thumb-placeholder g4" style="width:100%;height:100%;"><span class="emoji-icon">🔥</span></div><span class="badge badge-hd">HD</span><span class="duration">15:33</span><div class="thumb-overlay"><div class="play-icon"><i data-lucide="play" width="16" height="16" style="color:#000;margin-left:2px"></i></div></div></div><div class="card-body"><div class="card-title">Top 10 des clutch de l'année</div><div class="card-meta"><span class="view-count">876k vues</span></div></div></div>
+      <div class="video-card"><div class="thumb-wrap"><div class="thumb-placeholder g7" style="width:100%;height:100%;"><span class="emoji-icon">🎯</span></div><span class="badge badge-hd">HD</span><span class="duration">8:45</span><div class="thumb-overlay"><div class="play-icon"><i data-lucide="play" width="16" height="16" style="color:#000;margin-left:2px"></i></div></div></div><div class="card-body"><div class="card-title">Settings & sensibilité 2025</div><div class="card-meta"><span class="view-count">654k vues</span></div></div></div>
+      <div class="video-card"><div class="thumb-wrap"><div class="thumb-placeholder g9" style="width:100%;height:100%;"><span class="emoji-icon">🏆</span></div><span class="badge badge-4k">4K</span><span class="duration">31:20</span><div class="thumb-overlay"><div class="play-icon"><i data-lucide="play" width="16" height="16" style="color:#000;margin-left:2px"></i></div></div></div><div class="card-body"><div class="card-title">Tournoi Final — Grand Prix</div><div class="card-meta"><span class="view-count">3.4M vues</span></div></div></div>
+    </div>
+  </div>
+
+  <!-- Playlists tab -->
+
+  <div class="profile-tab-content" id="tab-playlists">
+    <div style="padding:16px;display:flex;flex-direction:column;gap:10px">
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;display:flex;gap:12px;padding:12px;cursor:pointer;transition:border-color 0.2s" ontouchstart="this.style.borderColor='var(--orange)'" ontouchend="this.style.borderColor='var(--border)'">
+        <div class="thumb-placeholder g1" style="width:80px;height:56px;border-radius:8px;flex-shrink:0;"><span style="font-size:20px">🎮</span></div>
+        <div><div style="font-weight:700;font-size:13px;margin-bottom:4px">Compilation Gaming 2025</div><div style="font-size:11px;color:var(--text-muted)">24 vidéos · 6h 12min</div></div>
+      </div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;display:flex;gap:12px;padding:12px;cursor:pointer" ontouchstart="this.style.borderColor='var(--orange)'" ontouchend="this.style.borderColor='var(--border)'">
+        <div class="thumb-placeholder g4" style="width:80px;height:56px;border-radius:8px;flex-shrink:0;"><span style="font-size:20px">🔥</span></div>
+        <div><div style="font-weight:700;font-size:13px;margin-bottom:4px">Mes Meilleurs Moments</div><div style="font-size:11px;color:var(--text-muted)">12 vidéos · 2h 45min</div></div>
+      </div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;display:flex;gap:12px;padding:12px;cursor:pointer" ontouchstart="this.style.borderColor='var(--orange)'" ontouchend="this.style.borderColor='var(--border)'">
+        <div class="thumb-placeholder g3" style="width:80px;height:56px;border-radius:8px;flex-shrink:0;"><span style="font-size:20px">🤖</span></div>
+        <div><div style="font-weight:700;font-size:13px;margin-bottom:4px">Guides & Tutoriels</div><div style="font-size:11px;color:var(--text-muted)">8 vidéos · 3h 10min</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Activity tab -->
+
+  <div class="profile-tab-content" id="tab-activity">
+    <div class="activity-feed" id="activityFeed">
+    </div>
+  </div>
+
+  <!-- About tab -->
+
+  <div class="profile-tab-content" id="tab-about">
+    <div class="about-section">
+      <div class="about-bio">
+        Créateur de contenu Gaming depuis 2019 🎮 · Spécialisé FPS & Battle Royale · Top 500 joueurs EU · Basé à Paris 🇫🇷<br><br>
+        Nouvelle vidéo chaque <strong style="color:var(--orange)">lundi et jeudi</strong> à 18h. Lives le weekend sur pH.
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
+        <div class="tag active" style="cursor:default">🎮 Gaming</div>
+        <div class="tag active" style="cursor:default">🔥 Esport</div>
+        <div class="tag active" style="cursor:default">💻 Tech</div>
+        <div class="tag active" style="cursor:default">🏆 FPS</div>
+      </div>
+      <div class="about-links">
+        <a class="about-link" href="#"><i data-lucide="twitter" width="16" height="16"></i> @xNovaxYT</a>
+        <a class="about-link" href="#"><i data-lucide="instagram" width="16" height="16"></i> xnovax.gaming</a>
+        <a class="about-link" href="#"><i data-lucide="globe" width="16" height="16"></i> xnovax.gg</a>
+        <a class="about-link" href="#"><i data-lucide="mail" width="16" height="16"></i> contact@xnovax.gg</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+     PAGE: NOTIFICATIONS
+══════════════════════════════ -->
+
+<div class="page" id="page-notif">
+  <div style="padding:16px;display:flex;flex-direction:column;gap:10px">
+    <div class="section-header" style="padding:4px 0 12px">
+      <div class="section-title">NOTIFICATIONS</div>
+      <div class="section-more">Tout lire</div>
+    </div>
+    <div class="activity-feed" id="notifFeed"></div>
+  </div>
+</div>
+
+<!-- ── BOTTOM TABBAR ── -->
+
+<nav class="tabbar">
+  <button class="tab-item active" onclick="switchPage('home',this)">
+    <i data-lucide="home" width="22" height="22"></i>
+    <span>Accueil</span>
+    <div class="tab-indicator"></div>
+  </button>
+  <button class="tab-item" onclick="switchPage('explore',this)">
+    <i data-lucide="compass" width="22" height="22"></i>
+    <span>Explorer</span>
+    <div class="tab-indicator"></div>
+  </button>
+  <button class="tab-item" onclick="switchPage('profile',this)">
+    <i data-lucide="user-circle" width="22" height="22"></i>
+    <span>Profil</span>
+    <div class="tab-indicator"></div>
+  </button>
+  <button class="tab-item" onclick="switchPage('notif',this)" id="notifTab">
+    <i data-lucide="bell" width="22" height="22"></i>
+    <span>Alertes</span>
+    <div class="tab-indicator"></div>
+  </button>
+</nav>
+
+<!-- ── FILTER SIDEBAR ── -->
+
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+<div class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-title">FILTRES</div>
+    <button class="close-btn" onclick="closeSidebar()">
+      <i data-lucide="x" width="18" height="18"></i>
+    </button>
+  </div>
+
+  <div class="filter-section">
+    <h4>Catégorie</h4>
+    <div class="filter-pills">
+      <div class="filter-pill active" onclick="togglePill(this)">Tout</div>
+      <div class="filter-pill" onclick="togglePill(this)">Gaming 🎮</div>
+      <div class="filter-pill" onclick="togglePill(this)">Tech 💻</div>
+      <div class="filter-pill" onclick="togglePill(this)">Vlog 📹</div>
+      <div class="filter-pill" onclick="togglePill(this)">Music 🎵</div>
+      <div class="filter-pill" onclick="togglePill(this)">Sport ⚡</div>
+    </div>
+  </div>
+
+  <div class="filter-section">
+    <h4>Qualité</h4>
+    <div class="filter-pills">
+      <div class="filter-pill active" onclick="togglePill(this)">Tout</div>
+      <div class="filter-pill" onclick="togglePill(this)">4K</div>
+      <div class="filter-pill" onclick="togglePill(this)">HD</div>
+      <div class="filter-pill" onclick="togglePill(this)">Live</div>
+    </div>
+  </div>
+
+  <div class="filter-section">
+    <h4>Durée max (min)</h4>
+    <div class="range-wrap">
+      <div class="range-label"><span>0 min</span><span id="rangeVal">60 min</span></div>
+      <input type="range" min="0" max="60" value="60" oninput="document.getElementById('rangeVal').textContent=this.value+' min'">
+    </div>
+  </div>
+
+  <div class="filter-section">
+    <h4>Créateur</h4>
+    <div class="filter-pills">
+      <div class="filter-pill" onclick="togglePill(this)">xNovaxYT</div>
+      <div class="filter-pill" onclick="togglePill(this)">TechByNara</div>
+      <div class="filter-pill" onclick="togglePill(this)">Lekko_Dev</div>
+      <div class="filter-pill" onclick="togglePill(this)">BeatsByLuka</div>
+    </div>
+  </div>
+
+  <div class="filter-section">
+    <h4>Engagement min</h4>
+    <div class="range-wrap">
+      <div class="range-label"><span>0%</span><span id="engageVal">50%</span></div>
+      <input type="range" min="0" max="100" value="50" oninput="document.getElementById('engageVal').textContent=this.value+'%'">
+    </div>
+  </div>
+
+  <button class="apply-filter-btn" onclick="applyFilters()">
+    Appliquer les filtres
+  </button>
+</div>
+
+<!-- ── UPLOAD MODAL ── -->
+
+<div class="modal-overlay" id="modalOverlay" onclick="handleModalOverlayClick(event)">
+  <div class="modal" id="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">UPLOAD<span style="color:var(--orange)">.</span></div>
+
+```
+<div class="dropzone" id="dropzone">
+  <input type="file" class="dropzone-input" accept="video/*" onchange="handleFile(event)">
+  <div class="dropzone-icon"><i data-lucide="cloud-upload" width="40" height="40"></i></div>
+  <div class="dropzone-title">Glisse ta vidéo ici</div>
+  <div class="dropzone-sub">MP4, MOV, AVI · Max 10GB</div>
+</div>
+
+<div id="fileInfo" class="hidden" style="background:var(--surface2);border:1px solid var(--orange);border-radius:10px;padding:12px 14px;margin-bottom:16px;display:flex;gap:10px;align-items:center">
+  <i data-lucide="file-video" width="22" height="22" style="color:var(--orange);flex-shrink:0"></i>
+  <div>
+    <div style="font-size:13px;font-weight:700" id="fileName">video.mp4</div>
+    <div style="font-size:11px;color:var(--text-muted)" id="fileSize">240 MB</div>
+  </div>
+  <i data-lucide="check-circle" width="18" height="18" style="color:#48bb78;margin-left:auto"></i>
+</div>
+
+<div class="modal-form">
+  <div class="form-field">
+    <label class="form-label">Titre</label>
+    <input class="form-input" type="text" placeholder="Donne un titre accrocheur…">
+  </div>
+  <div class="form-field">
+    <label class="form-label">Description</label>
+    <textarea class="form-input" rows="3" placeholder="Décris ta vidéo…" style="resize:none"></textarea>
+  </div>
+  <div class="form-field">
+    <label class="form-label">Catégorie</label>
+    <div class="category-pills" id="catPills">
+      <button class="cat-pill active" onclick="selectCat(this)">🎮 Gaming</button>
+      <button class="cat-pill" onclick="selectCat(this)">💻 Tech</button>
+      <button class="cat-pill" onclick="selectCat(this)">📹 Vlog</button>
+      <button class="cat-pill" onclick="selectCat(this)">🎵 Music</button>
+      <button class="cat-pill" onclick="selectCat(this)">⚡ Sport</button>
+    </div>
+  </div>
+  <div class="form-field">
+    <label class="form-label">Qualité</label>
+    <div class="category-pills">
+      <button class="cat-pill active" onclick="selectCat(this)">4K</button>
+      <button class="cat-pill" onclick="selectCat(this)">HD</button>
+      <button class="cat-pill" onclick="selectCat(this)">Live</button>
+    </div>
+  </div>
+  <button class="submit-btn" onclick="submitUpload()">
+    <i data-lucide="zap" width="16" height="16"></i>
+    Publier maintenant
+  </button>
+</div>
+```
+
+  </div>
+</div>
+
+<!-- TOAST -->
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── DATA MOCK ──
+const VIDEOS = [
+  { id:1, title:"30 Kills consécutifs — Apex Legends Season 22", creator:"xNovaxYT", views:"2.3M", duration:"18:42", badge:"4k", category:"Gaming", emoji:"🎮", gradient:"g1", engagement:98, wide:true },
+  { id:2, title:"GPT-5 vs Claude : le vrai comparatif", creator:"Lekko_Dev", views:"892k", duration:"12:05", badge:"hd", category:"Tech", emoji:"🤖", gradient:"g3", engagement:88 },
+  { id:3, title:"24h au Japon en solo — Vlog ultime", creator:"TechByNara", views:"1.1M", duration:"22:14", badge:"hd", category:"Vlog", emoji:"🌍", gradient:"g2", engagement:92 },
+  { id:4, title:"LIVE — Tournoi #14 — Phase Finale", creator:"xNovaxYT", views:"12.4k", duration:"LIVE", badge:"live", category:"Gaming", emoji:"🏆", gradient:"g4", engagement:97 },
+  { id:5, title:"Mon setup gaming 2025 — RTX 5090", creator:"Lekko_Dev", views:"654k", duration:"15:33", badge:"4k", category:"Tech", emoji:"💻", gradient:"g9", engagement:85 },
+  { id:6, title:"Beatmaking session — Trap x Jazz", creator:"BeatsByLuka", views:"430k", duration:"28:12", badge:"hd", category:"Music", emoji:"🎵", gradient:"g7", engagement:90 },
+  { id:7, title:"Marathon 42km — Doc de prépa", creator:"RunnerMax", views:"218k", duration:"44:20", badge:"hd", category:"Sport", emoji:"⚡", gradient:"g5", engagement:82 },
+  { id:8, title:"Vlog Tokyo Ep.3 — Shibuya Night", creator:"TechByNara", views:"567k", duration:"19:07", badge:"hd", category:"Vlog", emoji:"🏙️", gradient:"g6", engagement:86 },
+];
+
+const ACTIVITY = [
+  { user:"NaraFan23", action:"a liké ta vidéo", target:'"Apex Legends Season 22"', time:"2 min", avatar:"g2", type:"like" },
+  { user:"GamingZone_FR", action:"a commenté", target:'"Incroyable gameplay, top 1 !"', time:"8 min", avatar:"g4", type:"comment" },
+  { user:"Lekko_Dev", action:"s'est abonné à ta chaîne", target:"", time:"15 min", avatar:"g3", type:"follow" },
+  { user:"Mariexx_", action:"a liké ta vidéo", target:'"Setup gaming 2025"', time:"23 min", avatar:"g7", type:"like" },
+  { user:"BeatsByLuka", action:"a commenté", target:'"On collab bientôt ? 🔥"', time:"1h", avatar:"g8", type:"comment" },
+  { user:"TurboPower99", action:"a partagé ta vidéo", target:"", time:"2h", avatar:"g9", type:"share" },
+  { user:"xFPS_Fr", action:"a liké ta vidéo", target:'"LIVE Tournoi #14"', time:"3h", avatar:"g5", type:"like" },
+];
+
+let currentSort = 'popular';
+let currentTag = 'all';
+let searchQuery = '';
+
+// ── RENDER VIDEOS ──
+function renderVideos() {
+  const grid = document.getElementById('videoGrid');
+  let filtered = VIDEOS.filter(v => {
+    const tagOk = currentTag === 'all' || v.category === currentTag;
+    const searchOk = !searchQuery ||
+      v.title.toLowerCase().includes(searchQuery) ||
+      v.creator.toLowerCase().includes(searchQuery);
+    return tagOk && searchOk;
+  });
+
+  if (currentSort === 'recent') filtered = [...filtered].reverse();
+  else if (currentSort === 'engagement') filtered = [...filtered].sort((a,b) => b.engagement - a.engagement);
+  else filtered = [...filtered].sort((a,b) => parseFloat(b.views) - parseFloat(a.views));
+
+  document.getElementById('noResults').style.display = filtered.length === 0 ? 'block' : 'none';
+
+  grid.innerHTML = filtered.map(v => `
+    <div class="video-card ${v.wide ? 'wide' : ''}" onclick="showToast('▶ Lecture de ${v.title.slice(0,30)}…')">
+      <div class="thumb-wrap">
+        <div class="thumb-placeholder ${v.gradient}" style="width:100%;height:100%">
+          <span class="emoji-icon" style="font-size:${v.wide?'48':'28'}px">${v.emoji}</span>
+        </div>
+        ${v.badge === '4k' ? '<span class="badge badge-4k">4K</span>' : ''}
+        ${v.badge === 'hd' ? '<span class="badge badge-hd">HD</span>' : ''}
+        ${v.badge === 'live' ? '<span class="badge badge-live">LIVE</span>' : ''}
+        ${v.badge !== 'live' ? `<span class="duration">${v.duration}</span>` : ''}
+        <div class="thumb-overlay">
+          <div class="play-icon">
+            <i data-lucide="play" width="${v.wide?'20':'16'}" height="${v.wide?'20':'16'}" style="color:#000;margin-left:2px"></i>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="card-title">${v.title}</div>
+        <div class="card-meta">
+          <div class="creator-row">
+            <div class="${v.gradient}" style="width:18px;height:18px;border-radius:50%;border:1px solid var(--orange);flex-shrink:0"></div>
+            <span class="creator-name">${v.creator}</span>
+          </div>
+          <span class="view-count">${v.views} vues</span>
+        </div>
+      </div>
+      <div class="card-stats">
+        <div class="stat"><i data-lucide="heart" width="11" height="11" class="orange"></i> <span class="orange">${v.engagement}%</span></div>
+        <div class="stat"><i data-lucide="eye" width="11" height="11"></i> ${v.views}</div>
+        <div class="stat"><i data-lucide="message-circle" width="11" height="11"></i> ${Math.floor(Math.random()*500+50)}</div>
+      </div>
+    </div>
+  `).join('');
+
+  lucide.createIcons();
+}
+
+// ── ACTIVITY FEED ──
+function renderActivity() {
+  const icons = { like:'heart', comment:'message-circle', follow:'user-plus', share:'share-2' };
+  const colors = { like:'#FF9900', comment:'#60a5fa', follow:'#48bb78', share:'#a78bfa' };
+
+  const html = ACTIVITY.map(a => `
+    <div class="activity-item">
+      <div class="creator-chip-avatar ${a.avatar}" style="width:34px;height:34px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px">👤</div>
+      <div class="activity-text">
+        <span class="activity-user">${a.user}</span>
+        <span class="activity-action"> ${a.action} </span>
+        ${a.target ? `<span style="color:var(--orange);font-size:12px">${a.target}</span>` : ''}
+        <div class="activity-time">${a.time}</div>
+      </div>
+      <i data-lucide="${icons[a.type]}" width="16" height="16" style="color:${colors[a.type]};flex-shrink:0;margin-top:2px"></i>
+    </div>
+  `).join('');
+
+  document.getElementById('activityFeed').innerHTML = html;
+  document.getElementById('notifFeed').innerHTML = html;
+  lucide.createIcons();
+}
+
+// ── UI FUNCTIONS ──
+function switchPage(page, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  el.classList.add('active');
+  // Remove notif badge on bell tap
+  if (page === 'notif') {
+    const b = document.querySelector('.notif-badge');
+    if (b) b.style.display = 'none';
+  }
+}
+
+function selectTag(el) {
+  document.querySelectorAll('.tag').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  currentTag = el.dataset.tag;
+  filterVideos();
+}
+
+function setSort(el, sort) {
+  document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  currentSort = sort;
+  renderVideos();
+}
+
+function filterVideos() {
+  searchQuery = document.getElementById('searchInput').value.toLowerCase().trim();
+  renderVideos();
+}
+
+function openSidebar() {
+  document.getElementById('sidebar').classList.add('open');
+  document.getElementById('sidebarOverlay').classList.add('open');
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebarOverlay').classList.remove('open');
+}
+
+function togglePill(el) {
+  el.classList.toggle('active');
+}
+
+function applyFilters() {
+  closeSidebar();
+  showToast('✓ Filtres appliqués');
+  renderVideos();
+}
+
+function openModal() {
+  document.getElementById('modalOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+function handleModalOverlayClick(e) {
+  if (e.target === document.getElementById('modalOverlay')) closeModal();
+}
+
+function handleFile(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  document.getElementById('dropzone').classList.add('hidden');
+  const fi = document.getElementById('fileInfo');
+  fi.classList.remove('hidden');
+  fi.style.display = 'flex';
+  document.getElementById('fileName').textContent = file.name;
+  document.getElementById('fileSize').textContent = (file.size / 1024 / 1024).toFixed(1) + ' MB';
+  lucide.createIcons();
+}
+
+function selectCat(el) {
+  const parent = el.parentElement;
+  parent.querySelectorAll('.cat-pill').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function submitUpload() {
+  closeModal();
+  showToast('🚀 Vidéo publiée avec succès !');
+}
+
+let isFollowing = false;
+function toggleFollow() {
+  isFollowing = !isFollowing;
+  const btn = document.getElementById('followBtn');
+  btn.textContent = isFollowing ? '✓ Abonné' : '+ Suivre';
+  btn.className = 'follow-btn' + (isFollowing ? ' following' : '');
+  showToast(isFollowing ? '✓ Abonné à xNovaxYT' : 'Désabonné de xNovaxYT');
+}
+
+function switchProfileTab(el, tab) {
+  document.querySelectorAll('.ptab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.profile-tab-content').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('tab-'+tab).classList.add('active');
+  lucide.createIcons();
+}
+
+let toastTimeout;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimeout);
+  toastTimeout = setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// Drag & drop
+const dz = document.getElementById('dropzone');
+if (dz) {
+  dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('dragover'); });
+  dz.addEventListener('dragleave', () => dz.classList.remove('dragover'));
+  dz.addEventListener('drop', e => {
+    e.preventDefault(); dz.classList.remove('dragover');
+    if (e.dataTransfer.files[0]) handleFile({ target: { files: e.dataTransfer.files } });
+  });
+}
+
+// ── INIT ──
+document.addEventListener('DOMContentLoaded', () => {
+  lucide.createIcons();
+  renderVideos();
+  renderActivity();
+});
+</script>
+
+</body>
+</html>
